@@ -2,15 +2,19 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "jsp_gram"
+        IMAGE_NAME = "geetha27/jspgram"
         CONTAINER_NAME = "jspgram-app"
-    }
-    tools{
-        maven "maven"
     }
 
     stages {
-        stage('Build Maven Project') {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Geetha-R-27/jsp_spring_docker_jenkins_cicd.git'
+            }
+        }
+
+        stage('Build with Maven') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
@@ -18,21 +22,28 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME'
-            }
-        }
+                script {
+                    sh '''
+                    echo "📂 Directory:"
+                    pwd
+                    echo "📄 Listing files:"
+                    ls -l
 
-        stage('Login to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
+                    echo "🐳 Building Docker Image..."
+                    docker build -t $IMAGE_NAME .
+                    '''
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push to DockerHub') {
             steps {
-                sh 'docker push $IMAGE_NAME'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh '''
+                    echo "$PASS" | docker login -u "$USER" --password-stdin
+                    docker push $IMAGE_NAME
+                    '''
+                }
             }
         }
 
@@ -41,18 +52,15 @@ pipeline {
                 sh '''
                 docker stop $CONTAINER_NAME || true
                 docker rm $CONTAINER_NAME || true
-                docker run -d --name $CONTAINER_NAME -p 8081:80 $IMAGE_NAME
+                docker run -d -p 8080:8080 --name $CONTAINER_NAME $IMAGE_NAME
                 '''
             }
         }
     }
 
     post {
-        success {
-            echo "🚀 Deployment Successful!"
-        }
-        failure {
-            echo "❌ Deployment Failed"
-        }
+        always { echo "🏁 Pipeline Finished" }
+        success { echo "🚀 Deployment Successful!" }
+        failure { echo "❌ Deployment Failed" }
     }
 }
