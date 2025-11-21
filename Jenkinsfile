@@ -6,6 +6,9 @@ pipeline {
         CONTAINER_NAME = "jspgram-app"
     }
 
+    tools{
+        maven 'maven'
+    }
     stages {
 
         stage('Checkout') {
