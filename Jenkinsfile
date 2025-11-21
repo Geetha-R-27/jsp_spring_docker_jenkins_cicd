@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "geetha27/jspgram"
+        IMAGE_NAME = "jsp_gram"
         CONTAINER_NAME = "jspgram-app"
     }
     tools{
-        maven 'maven'
+        maven "maven"
     }
 
     stages {
