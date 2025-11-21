@@ -6,6 +6,9 @@ pipeline {
         CONTAINER_NAME = "jspgram-app"
         DOCKERHUB_CREDENTIALS = "dockerhub-creds"
     }
+    tools{
+        maven 'maven'
+    }
 
     stages {
 
