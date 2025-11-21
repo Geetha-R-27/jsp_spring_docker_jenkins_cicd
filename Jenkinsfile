@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "geetha27/jspgram"
+        IMAGE_NAME = "geethar27/jspgram"
         CONTAINER_NAME = "jspgram-app"
     }
 
