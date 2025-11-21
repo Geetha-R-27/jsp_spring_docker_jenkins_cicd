@@ -5,6 +5,9 @@ pipeline {
         IMAGE_NAME = "geetha27/jspgram"
         CONTAINER_NAME = "jspgram-app"
     }
+    tools{
+        maven 'maven'
+    }
 
     stages {
         stage('Build Maven Project') {
