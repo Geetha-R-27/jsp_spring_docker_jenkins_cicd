@@ -42,7 +42,7 @@ pipeline {
                 docker stop springapp || true
                 docker rm springapp || true
                 docker pull ${IMAGE_NAME}:latest
-                docker run -d -p 8080:8080 --name springapp ${IMAGE_NAME}:latest
+                docker run -d -p 9090:80 --name springapp ${IMAGE_NAME}:latest
                 """
             }
         }
