@@ -2,71 +2,45 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "geethar27/jspgram"
-        CONTAINER_NAME = "jspgram-app"
-        DOCKERHUB_CREDENTIALS = "dockerhub-creds"
-    }
-    tools{
-        maven 'maven'
+        IMAGE_NAME = "geethar27/springapp"
     }
 
     stages {
-
-        stage('Checkout') {
+        stage('Build JAR') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Build Maven') {
-            steps {
-                sh 'mvn clean package -DskipTests'
+                sh './mvnw clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    echo "📂 Directory:"
-                    pwd
-                    echo "📄 Listing files:"
-                    ls -l
-
-                    echo "🐳 Building Docker image..."
-                    docker build -t ${IMAGE_NAME}:latest .
-                '''
+                sh "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('Login & Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS, usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh '''
-                        echo "$PASS" | docker login -u "$USER" --password-stdin
-                        docker push ${IMAGE_NAME}:latest
-                        docker logout
-                    '''
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
+                    sh "docker push ${IMAGE_NAME}:latest"
                 }
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy Application') {
             steps {
-                sh '''
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                    docker run -d --name ${CONTAINER_NAME} -p 9090:80 ${IMAGE_NAME}:latest
-                '''
+                sh """
+                docker stop springapp || true
+                docker rm springapp || true
+                docker pull ${IMAGE_NAME}:latest
+                docker run -d -p 8080:8080 --name springapp ${IMAGE_NAME}:latest
+                """
             }
         }
     }
 
     post {
-        success {
-            echo "🎉 Pipeline succeeded - App deployed!"
-        }
-        failure {
-            echo "❌ Pipeline failed - check logs!"
-        }
+        success { echo "🚀 Deployment completed successfully!" }
+        failure { echo "❌ Deployment failed. Check logs." }
     }
 }
