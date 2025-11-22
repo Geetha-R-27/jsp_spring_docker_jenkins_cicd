@@ -14,6 +14,11 @@ pipeline {
                 sh './mvnw clean package -DskipTests'
             }
         }
+         stage('Set Permissions') {
+            steps {
+                sh 'chmod +x mvnw'
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
