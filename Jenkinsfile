@@ -4,6 +4,9 @@ pipeline {
     environment {
         IMAGE_NAME = "geethar27/springapp"
     }
+    tools{
+        maven 'maven'
+    }
 
     stages {
         stage('Build JAR') {
