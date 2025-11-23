@@ -21,8 +21,7 @@ pipeline {
         }
        
 
-        pipeline {
-    agent any
+    
     stages {
         stage('Build Docker Image') {
             steps {
@@ -32,7 +31,7 @@ pipeline {
             }
         }
     }
-}
+
 
 
         stage('Login & Push to DockerHub') {
