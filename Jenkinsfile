@@ -3,60 +3,69 @@ pipeline {
 
     environment {
         IMAGE_NAME = "geethar27/springapp"
+        CONTAINER_NAME = "springapp"
+        PORT = "80"
     }
-    tools{
+
+    tools {
         maven 'maven'
     }
 
     stages {
-          stage('Set Permissions') {
-            steps {
-                sh 'chmod +x mvnw'
-            }
-        }
-        stage('Build JAR') {
+
+        stage('Build Maven Project') {
             steps {
                 sh './mvnw clean package -DskipTests'
             }
         }
-       
 
-    
-   
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'sudo docker build -t geethar27/springapp:latest .'
+                    sh "docker build -t ${IMAGE_NAME}:latest ."
                 }
             }
         }
-    
 
-
-
-        stage('Login & Push to DockerHub') {
+        stage('Login to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
-                    sh "docker push ${IMAGE_NAME}:latest"
                 }
             }
         }
 
-        stage('Deploy Application') {
+        stage('Push Image to DockerHub') {
             steps {
-                sh """
-                docker stop springapp || true
-                docker rm springapp || true
-                docker pull ${IMAGE_NAME}:latest
-                docker run -d -p 9090:80 --name springapp ${IMAGE_NAME}:latest
-                """
+                sh "docker push ${IMAGE_NAME}:latest"
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                script {
+                    sh """
+                    echo "🔍 Checking existing container..."
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm ${CONTAINER_NAME} || true
+                    
+                    echo "⬇ Pulling latest image..."
+                    docker pull ${IMAGE_NAME}:latest
+                    
+                    echo "🚀 Running new container..."
+                    docker run -d -p ${PORT}:${PORT} --name ${CONTAINER_NAME} ${IMAGE_NAME}:latest
+                    """
+                }
             }
         }
     }
 
     post {
-        success { echo "🚀 Deployment completed successfully!" }
-        failure { echo "❌ Deployment failed. Check logs." }
+        success {
+            echo "🚀 Deployment completed successfully! Application running on port ${PORT}"
+        }
+        failure {
+            echo "❌ Build or Deployment failed. Check Jenkins logs."
+        }
     }
 }
