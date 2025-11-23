@@ -12,6 +12,11 @@ pipeline {
     }
 
     stages {
+        stage('Give Execute Permission to mvnw') {
+            steps {
+                sh 'chmod +x mvnw'
+            }
+        }
 
         stage('Build Maven Project') {
             steps {
