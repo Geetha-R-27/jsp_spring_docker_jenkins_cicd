@@ -21,11 +21,19 @@ pipeline {
         }
        
 
+        pipeline {
+    agent any
+    stages {
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:latest ."
+                script {
+                    sh 'sudo docker build -t geethar27/springapp:latest .'
+                }
             }
         }
+    }
+}
+
 
         stage('Login & Push to DockerHub') {
             steps {
