@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "geethar27/springapp"
         CONTAINER_NAME = "springapp"
-        DOCKERHUB_CRED = "dockerhub-creds"      // Jenkins credential ID
+        DOCKERHUB_CRED = "dockerhub-creds"
     }
 
     tools {
@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        stage('Build Spring Boot App') {
+        stage('Build Maven Project') {
             steps {
                 sh './mvnw clean package -DskipTests'
             }
@@ -27,38 +27,36 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${IMAGE_NAME}:latest ."
-                }
+                sh "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
-        stage('DockerHub Login') {
+        stage('Login to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: DOCKERHUB_CRED, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh "echo $PASSWORD | docker login -u $USERNAME --password-stdin"
+                    sh "echo \$PASSWORD | docker login -u \$USERNAME --password-stdin"
                 }
             }
         }
 
-        stage('Push Image to DockerHub') {
+        stage('Push Docker Image') {
             steps {
                 sh "docker push ${IMAGE_NAME}:latest"
             }
         }
 
-        stage('Deploy Using Docker Compose') {
+        stage('Deploy with Docker Compose') {
             steps {
                 script {
                     sh """
-                    echo "🛑 Stopping existing deployment..."
-                    docker compose down || true
+                    echo "🛑 Stopping previous container..."
+                    docker-compose down || true
 
-                    echo "⬇ Pulling latest image..."
+                    echo "📥 Pulling latest image..."
                     docker pull ${IMAGE_NAME}:latest
 
-                    echo "🚀 Starting new deployment..."
-                    docker compose up -d
+                    echo "🚀 Starting application with docker-compose..."
+                    docker-compose up -d
                     """
                 }
             }
@@ -67,11 +65,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 Deployment Successful! Your SpringBoot App is Live."
+            echo "🎉 Deployment Successful! Your App is Live!"
         }
-
         failure {
-            echo "❌ Build or Deployment FAILED. Check Console Output."
+            echo "❌ Deployment Failed. Check logs."
         }
     }
 }
