@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: jspgram
+    ports:
+      - "3306:3306"
+    networks:
+      - spring-net
+
+  springapp:
+    image: geethar27/springapp:latest
+    container_name: springapp
+    depends_on:
+      - mysql-db
+    ports:
+      - "9090:80"
+    networks:
+      - spring-net
+
+networks:
+  spring-net:
