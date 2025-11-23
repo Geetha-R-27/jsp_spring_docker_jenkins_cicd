@@ -23,7 +23,7 @@ WORKDIR /app
 COPY --from=build /app/target/jsp-gram-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose Spring Boot port
-EXPOSE 8080
+EXPOSE 80
 
 # Start application
 ENTRYPOINT ["java", "-jar", "app.jar"]
