@@ -27,12 +27,31 @@ services:
       - "80:80"
     networks:
       - app-network
+
     environment:
+      # ---------- DATABASE ----------
       SPRING_DATASOURCE_URL: jdbc:mysql://clicknbuy-db:3306/clicknbuy?createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQL8Dialect
+      
+      # ---------- EMAIL ----------
+      EMAIL: geethar272003@gmail.com
+      APP_PWD: ozopfngqzxumganao
+
+      # ---------- CLOUDINARY ----------
+      CLOUDINARY_URL: cloudinary://289133591992525:7DCImx3QCwjki1LTbEWDz4mlA0s@djkyoabl5
+
+      # ---------- TWILIO ----------
+      TWILIO_ACCOUNT_SID: your-twilio-sid
+      TWILIO_AUTH_TOKEN: your-twilio-auth-token
+      TWILIO_MOBILE: your-twilio-mobile
+
+      # ---------- RAZORPAY ----------
+      RAZORPAY_KEY_ID: your-razorpay-key-id
+      RAZORPAY_KEY_SECRET: your-razorpay-key-secret
+
       TZ: Asia/Kolkata
 
 networks:
