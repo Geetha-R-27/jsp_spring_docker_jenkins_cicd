@@ -49,7 +49,7 @@ pipeline {
                 echo "Removing old database volume if exists"
                 sh """
                 if [ \$(docker volume ls -q -f name=${DB_VOLUME}) ]; then
-                    docker volume rm ${DB_VOLUME}
+                    docker volume rm ${DB_VOLUME} || true
                 fi
                 """
             }
