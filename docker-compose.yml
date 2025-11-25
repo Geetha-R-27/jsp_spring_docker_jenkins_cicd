@@ -8,6 +8,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: jspgram
+      MYSQL_ROOT_HOST: '%'
+      TZ: Asia/Kolkata
     ports:
       - "3306:3306"
     networks:
@@ -23,6 +25,12 @@ services:
       - "80:80"
     networks:
       - app-network
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/jspgram
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      TZ: Asia/Kolkata
 
 networks:
   app-network:
