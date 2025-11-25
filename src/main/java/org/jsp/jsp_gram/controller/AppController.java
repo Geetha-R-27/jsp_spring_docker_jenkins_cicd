@@ -170,4 +170,14 @@ public class AppController {
 	public String prime(HttpSession session) throws RazorpayException {
 		return service.prime(session);
 	}
+	@GetMapping("/test-email")
+public String sendTestEmail() {
+    try {
+        service.emailSender.sendOtp("yourtestemail@gmail.com", 123456, "TestUser");
+        return "✅ Test Email Triggered! Check inbox/spam.";
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "❌ Failed to send email: " + e.getMessage();
+    }
+}
 }
