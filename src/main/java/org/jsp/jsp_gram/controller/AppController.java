@@ -173,7 +173,7 @@ public class AppController {
 	@GetMapping("/test-email")
 public String sendTestEmail() {
     try {
-        service.emailSender.sendOtp("yourtestemail@gmail.com", 123456, "TestUser");
+        service.sendTestOtp("geethar272003@gmail.com", 123456, "TestUser");
         return "✅ Test Email Triggered! Check inbox/spam.";
     } catch (Exception e) {
         e.printStackTrace();
