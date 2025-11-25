@@ -2,9 +2,11 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "geethar27/springapp"
+        DOCKER_IMAGE = "geethar27/springapp:latest"
+        APP_PORT = "80"
+        COMPOSE_FILE = "docker-compose.yml"
         CONTAINER_NAME = "springapp"
-        DOCKERHUB_CRED = "dockerhub-creds"
+        DB_CONTAINER_NAME = "clicknbuy-db"
     }
 
     tools {
@@ -13,62 +15,73 @@ pipeline {
 
     stages {
 
-        stage('Permission Setup') {
+        stage('Build & Package') {
             steps {
-                sh 'chmod +x mvnw'
+                echo "Building the Spring Boot application"
+                sh 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Build Maven Project') {
+        stage('Clean Old Docker Containers & Images') {
             steps {
-                sh './mvnw clean package -DskipTests'
+                echo "Stopping and removing old containers if they exist"
+                sh """
+                # Stop and remove spring app container
+                if [ \$(docker ps -q -f name=${CONTAINER_NAME}) ]; then
+                    docker stop ${CONTAINER_NAME}
+                    docker rm ${CONTAINER_NAME}
+                fi
+
+                # Stop and remove DB container
+                if [ \$(docker ps -q -f name=${DB_CONTAINER_NAME}) ]; then
+                    docker stop ${DB_CONTAINER_NAME}
+                    docker rm ${DB_CONTAINER_NAME}
+                fi
+
+                # Remove old image
+                if [ \$(docker images -q ${DOCKER_IMAGE}) ]; then
+                    docker rmi -f ${DOCKER_IMAGE}
+                fi
+                """
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:latest ."
-            }
-        }
-
-        stage('Login to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CRED, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh "echo \$PASSWORD | docker login -u \$USERNAME --password-stdin"
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                sh "docker push ${IMAGE_NAME}:latest"
+                echo "Building Docker image from ClickNBuy code"
+                sh "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
         stage('Deploy with Docker Compose') {
             steps {
-                script {
-                    sh """
-                    echo "🛑 Stopping previous container..."
-                    docker-compose down || true
+                echo "Stopping any existing containers via Docker Compose"
+                sh """
+                if [ -f ${COMPOSE_FILE} ]; then
+                    docker-compose -f ${COMPOSE_FILE} down
+                fi
+                """
+                echo "Starting containers using Docker Compose"
+                sh "docker-compose -f ${COMPOSE_FILE} up --build -d"
+            }
+        }
 
-                    echo "📥 Pulling latest image..."
-                    docker pull ${IMAGE_NAME}:latest
-
-                    echo "🚀 Starting application with docker-compose..."
-                    docker-compose up -d
-                    """
-                }
+        stage('Verify Deployment') {
+            steps {
+                echo "Checking if containers are running"
+                sh "docker ps"
+                echo "Logs from Spring Boot container"
+                sh "docker logs ${CONTAINER_NAME} --tail 50"
             }
         }
     }
 
     post {
         success {
-            echo "🎉 Deployment Successful! Your App is Live!"
+            echo "✅ Deployment completed successfully!"
         }
         failure {
-            echo "❌ Deployment Failed. Check logs."
+            echo "❌ Deployment failed. Check logs for errors."
         }
     }
 }
