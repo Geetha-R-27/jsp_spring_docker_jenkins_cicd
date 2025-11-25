@@ -66,7 +66,7 @@ public class UserService {
 			int otp = new Random().nextInt(100000, 1000000);
 			user.setOtp(otp);
 			System.err.println(otp);
-			// emailSender.sendOtp(user.getEmail(), otp, user.getFirstname());
+			emailSender.sendOtp(user.getEmail(), otp, user.getFirstname());
 			repository.save(user);
 			session.setAttribute("pass", "Otp Sent Success");
 			return "redirect:/otp/" + user.getId();
