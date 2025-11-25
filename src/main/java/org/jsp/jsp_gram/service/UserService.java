@@ -45,11 +45,7 @@ public class UserService {
 		map.put("user", user);
 		return "register.html";
 	}
-	public void sendTestOtp(String email, int otp, String name) {
-    emailSender.sendOtp(email, otp, name);
-}
-
-	public String register(User user, BindingResult result, HttpSession session) {
+		public String register(User user, BindingResult result, HttpSession session) {
 		if (!user.getPassword().equals(user.getConfirmpassword()))
 			result.rejectValue("confirmpassword", "error.confirmpassword", "Passwords not Matching");
 
