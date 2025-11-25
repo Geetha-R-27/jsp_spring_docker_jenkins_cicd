@@ -5,10 +5,9 @@ pipeline {
         DOCKER_IMAGE = "geethar27/springapp:latest"
         APP_PORT = "80"
         COMPOSE_FILE = "docker-compose.yml"
-        CONTAINER_NAME = "springapp"
-        DB_CONTAINER_NAME = "clicknbuy-db"
+        DB_VOLUME = "clicknbuy-data"
     }
-
+    
     tools {
         maven 'maven'
     }
@@ -22,66 +21,54 @@ pipeline {
             }
         }
 
-        stage('Clean Old Docker Containers & Images') {
-            steps {
-                echo "Stopping and removing old containers if they exist"
-                sh """
-                # Stop and remove spring app container
-                if [ \$(docker ps -q -f name=${CONTAINER_NAME}) ]; then
-                    docker stop ${CONTAINER_NAME}
-                    docker rm ${CONTAINER_NAME}
-                fi
-
-                # Stop and remove DB container
-                if [ \$(docker ps -q -f name=${DB_CONTAINER_NAME}) ]; then
-                    docker stop ${DB_CONTAINER_NAME}
-                    docker rm ${DB_CONTAINER_NAME}
-                fi
-
-                # Remove old image
-                if [ \$(docker images -q ${DOCKER_IMAGE}) ]; then
-                    docker rmi -f ${DOCKER_IMAGE}
-                fi
-                """
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                echo "Building Docker image from ClickNBuy code"
+                echo "Building Docker image"
                 sh "docker build -t ${DOCKER_IMAGE} ."
             }
         }
 
-        stage('Deploy with Docker Compose') {
+        stage('Stop & Remove Existing Containers') {
             steps {
-                echo "Stopping any existing containers via Docker Compose"
+                echo "Stopping and removing existing containers"
                 sh """
-                if [ -f ${COMPOSE_FILE} ]; then
-                    docker-compose -f ${COMPOSE_FILE} down
+                if [ \$(docker ps -q -f name=springapp) ]; then
+                    docker stop springapp
+                    docker rm springapp
+                fi
+                if [ \$(docker ps -q -f name=clicknbuy-db) ]; then
+                    docker stop clicknbuy-db
+                    docker rm clicknbuy-db
                 fi
                 """
-                echo "Starting containers using Docker Compose"
-                sh "docker-compose -f ${COMPOSE_FILE} up --build -d"
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Remove Docker Volume (Optional Fresh DB)') {
             steps {
-                echo "Checking if containers are running"
-                sh "docker ps"
-                echo "Logs from Spring Boot container"
-                sh "docker logs ${CONTAINER_NAME} --tail 50"
+                echo "Removing old database volume if exists"
+                sh """
+                if [ \$(docker volume ls -q -f name=${DB_VOLUME}) ]; then
+                    docker volume rm ${DB_VOLUME}
+                fi
+                """
+            }
+        }
+
+        stage('Build & Run Docker Compose') {
+            steps {
+                echo "Building and starting containers using Docker Compose"
+                sh "docker-compose -f ${COMPOSE_FILE} up --build -d"
             }
         }
     }
 
     post {
         success {
-            echo "✅ Deployment completed successfully!"
+            echo "Deployment completed successfully!"
         }
         failure {
-            echo "❌ Deployment failed. Check logs for errors."
+            echo "Deployment failed. Check logs for errors."
         }
     }
 }
